@@ -200,16 +200,28 @@ input = %w[1664
   1093]
 .map(&:to_i)
 
-def find_entries(input)
-  desired_sum = 2020
-
-  input.each do |entry|
+def find_two_entries(input, desired_sum)
+  input.reduce do |entries, entry|
     want = desired_sum - entry
-    if input.include?(want)
-      puts want * entry
-      break
-    end
+
+    entries = [want, entry] if input.include?(want)
+    entries
   end
 end
 
-find_entries(input)
+def find_three_entries(input, desired_sum)
+  input.reduce do |entries, entry|
+    want1 = desired_sum - entry
+    want2, want3 = find_two_entries(input, want1)
+
+    entries = [want2, want3, entry] if input.include?(want2) && input.include?(want3)
+    entries
+  end
+end
+
+entries = find_two_entries(input, 2020)
+puts entries[0] * entries[1]
+
+entries = find_three_entries(input, 2020)
+puts entries[0] * entries[1] * entries[2]
+
