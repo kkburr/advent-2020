@@ -1,6 +1,6 @@
-package errorUtils
+package utils
 
-func CheckErr(e error) {
+func CheckError(e error) {
 	if e != nil {
 		panic(e)
 	}

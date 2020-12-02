@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/kkburr/advent-2020/kaitlin/utils"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -9,7 +10,7 @@ import (
 
 func main() {
 	data, err := ioutil.ReadFile("input")
-	checkErr(err)
+	utils.CheckError(err)
 	numbs := convertToSliceOfInts(data)
 
 	for i, v := range numbs {
@@ -49,11 +50,4 @@ func convertToSliceOfInts(a []byte) []int {
 		}
 	}
 	return digits
-}
-
-//TODO: pull this out into utils file
-func checkErr(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
