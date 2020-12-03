@@ -33,11 +33,9 @@ func main() {
 	wg.Wait()
 
 	product := 1
-	for i := 0; i <= len(slopes.slopes)-1; i++ {
+	for i := 0; i < len(slopes.slopes); i++ {
 		select {
 		case val := <-counts:
-			fmt.Println(product)
-			fmt.Println(val)
 			product = product * val
 		}
 	}
@@ -68,9 +66,9 @@ func scan(wg *sync.WaitGroup, s slope, data []string, counts chan int) {
 				if "#" == string(row[x]) {
 					treeCounter = treeCounter + 1
 				}
+				x = x + xSlope
 			}
-			x = x + xSlope
-			y = y + ySlope
+			y++
 		}
 	}
 	counts <- treeCounter
