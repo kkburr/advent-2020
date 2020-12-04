@@ -20,36 +20,23 @@ func main() {
 	f, err := ioutil.ReadFile("input")
 	utils.CheckError(err)
 	data := strings.Split(string(f), "\n")
-
+	s := slopes{[]slope{slope{[]int{1, 1}}, slope{[]int{3, 1}}, slope{[]int{5, 1}}, slope{[]int{7, 1}}, slope{[]int{1, 2}}}}
+	l := len(s.slopes)
+	counts := make(chan int, l)
 	var wg sync.WaitGroup
-	slopes := slopes{[]slope{slope{[]int{1, 1}}, slope{[]int{3, 1}}, slope{[]int{5, 1}}, slope{[]int{7, 1}}, slope{[]int{1, 2}}}}
-	counts := make(chan int, len(slopes.slopes))
-
-	for _, v := range slopes.slopes {
-		wg.Add(1)
+	wg.Add(l)
+	for _, v := range s.slopes {
 		go scan(&wg, v, data, counts)
 	}
-
 	wg.Wait()
-
 	product := 1
-	for i := 0; i < len(slopes.slopes); i++ {
+	for i := 0; i < l; i++ {
 		select {
 		case val := <-counts:
-			product = product * val
+			product *= val
 		}
 	}
 	fmt.Printf("Part 2 answer: %v", product)
-}
-
-func trimX(l, p int) int {
-	for {
-		if p >= l {
-			p = p - l
-		} else {
-			return p
-		}
-	}
 }
 
 func scan(wg *sync.WaitGroup, s slope, data []string, counts chan int) {
@@ -57,21 +44,21 @@ func scan(wg *sync.WaitGroup, s slope, data []string, counts chan int) {
 	y := 0
 	xSlope := s.axis[0]
 	ySlope := s.axis[1]
-	treeCounter := 0
-	for _, row := range data {
-		row = strings.TrimSpace(row)
-		if row != "" {
-			if (y % ySlope) == 0 {
-				x = trimX(len(row), x)
-				if "#" == string(row[x]) {
-					treeCounter = treeCounter + 1
-				}
-				x = x + xSlope
-			}
-			y++
+	t := 0
+	for i, row := range data {
+		if row == "" {
+			fmt.Println(i)
+			continue
 		}
+		if (y % ySlope) == 0 {
+			if row[x] == '#' {
+				t += 1
+			}
+			x = (x + xSlope) % len(row)
+		}
+		y++
 	}
-	counts <- treeCounter
-	fmt.Printf("Trees hit in slope x %v & y %v: %v\n", xSlope, ySlope, treeCounter)
+	counts <- t
+	fmt.Printf("Trees hit in slope x %v & y %v: %v\n", xSlope, ySlope, t)
 	wg.Done()
 }
