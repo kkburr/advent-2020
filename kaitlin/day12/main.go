@@ -13,12 +13,15 @@ type compass struct {
 	directions   []byte       // array of all possible directions
 	instructions []string     // array of input instructions
 	log          map[byte]int // record of moves in each direction
+	waypoint     map[byte]int
 }
 
 func main() {
 	c := initCompass()
 	part1 := c.part1()
-	fmt.Println(part1)
+	fmt.Printf("Part 1: %v\n", part1)
+	part2 := c.part2()
+	fmt.Printf("Part 2: %v\n", part2)
 }
 
 func initCompass() *compass {
@@ -34,6 +37,7 @@ func initCompass() *compass {
 		directions:   []byte{'W', 'N', 'E', 'S'},
 		instructions: instructions,
 		log:          map[byte]int{'E': 0, 'N': 0, 'W': 0, 'S': 0},
+		waypoint:     map[byte]int{'E': 10, 'N': 1, 'W': 0, 'S': 0},
 	}
 	return &c
 }
@@ -43,7 +47,18 @@ func (c *compass) part1() float64 {
 		dir := v[0]
 		amt, _ := strconv.Atoi(v[1:])
 		c.move(dir, amt)
-		fmt.Println(c.log)
+	}
+	eastWest := c.log['E'] - c.log['W']
+	northSouth := c.log['N'] - c.log['S']
+	return math.Abs(float64(eastWest)) + math.Abs(float64(northSouth))
+}
+
+func (c *compass) part2() float64 {
+	c.log = map[byte]int{'E': 0, 'N': 0, 'W': 0, 'S': 0}
+	for _, v := range c.instructions {
+		dir := v[0]
+		amt, _ := strconv.Atoi(v[1:])
+		c.move2(dir, amt)
 	}
 	eastWest := c.log['E'] - c.log['W']
 	northSouth := c.log['N'] - c.log['S']
@@ -53,7 +68,7 @@ func (c *compass) part1() float64 {
 func (c *compass) move(dir byte, amt int) {
 	switch {
 	case dir == 'L' || dir == 'R':
-		c.changeDirections(dir, amt/90)
+		c.F = c.changeDirections(dir, c.F, amt/90)
 	case dir == 'F':
 		c.log[c.F] = c.log[c.F] + amt
 	default:
@@ -61,11 +76,43 @@ func (c *compass) move(dir byte, amt int) {
 	}
 }
 
-func (c *compass) changeDirections(dir byte, numberOfTurns int) {
+func (c *compass) move2(dir byte, amt int) {
+	switch {
+	case dir == 'L' || dir == 'R':
+		tempMap := map[byte]int{'E': 10, 'N': 1, 'W': 0, 'S': 0}
+		for k, v := range c.waypoint {
+			newDir := c.changeDirections(dir, k, amt/90)
+			tempMap[newDir] = v
+		}
+		c.waypoint = tempMap
+	case dir == 'F':
+		for k, v := range c.waypoint {
+			if v > 0 {
+				c.log[k] = c.log[k] + (amt * v)
+			}
+		}
+	default:
+		oppositeDir := c.changeDirections('L', dir, 2)
+		oppositeAmt := c.waypoint[oppositeDir]
+		if oppositeAmt > 0 {
+			newAmt := oppositeAmt - amt
+			if newAmt < 0 {
+				c.waypoint[dir] = int(math.Abs(float64(newAmt)))
+				c.waypoint[oppositeDir] = 0
+			} else {
+				c.waypoint[oppositeDir] = newAmt
+			}
+		} else {
+			c.waypoint[dir] = c.waypoint[dir] + amt
+		}
+	}
+}
+
+func (c *compass) changeDirections(dir, position byte, numberOfTurns int) byte {
 	var index int
 
 	for i, v := range c.directions {
-		if v == c.F {
+		if v == position {
 			index = i
 		}
 	}
@@ -77,7 +124,7 @@ func (c *compass) changeDirections(dir byte, numberOfTurns int) {
 	}
 
 	index = adjustIndex(index)
-	c.F = c.directions[index]
+	return c.directions[index]
 }
 
 func adjustIndex(index int) int {
